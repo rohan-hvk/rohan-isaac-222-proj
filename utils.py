@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind
+import calendar
+
+
 
 def load_and_clean(path: str) -> pd.DataFrame:
     """
@@ -105,3 +108,57 @@ def ttest_shows_2024(df1: pd.DataFrame, df2: pd.DataFrame):
     a = (df1[df1['Watch Year']==2024]['Type']=='Show').astype(int)
     b = (df2[df2['Watch Year']==2024]['Type']=='Show').astype(int)
     return ttest_ind(a, b, equal_var=False)
+
+def plot_weekday_distribution(df: pd.DataFrame, user: str):
+    """
+    Bar chart of total Netflix sessions by weekday (Mon → Sun).
+    """
+    # 1) pull out only valid dates
+    tmp = df.dropna(subset=['Date'])
+    # 2) count how many sessions fall on each weekday name
+    weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+    counts = (
+        tmp['Date']
+          .dt
+          .day_name()
+          .value_counts()
+          .reindex(weekdays, fill_value=0)
+    )
+    # 3) plot
+    ax = counts.plot(
+        kind='bar',
+        title=f"{user}: Views by Weekday",
+        figsize=(6,4)
+    )
+    ax.set_xlabel("Day of Week")
+    ax.set_ylabel("Session Count")
+    plt.tight_layout()
+    plt.show()
+
+def plot_monthly_distribution(df: pd.DataFrame, user: str):
+    """
+    Bar chart of total watch sessions aggregated by calendar month.
+    Shows Jan (1) through Dec (12) counts so you can see
+    which part of the year each user watches most.
+    """
+    # extract only valid dates
+    dates = df.dropna(subset=['Date'])['Date']
+    # count by month number
+    counts = dates.dt.month.value_counts(sort=False).sort_index()
+    
+    # convert 1–12 into Jan, Feb, … Dec
+    labels = [calendar.month_abbr[m] for m in counts.index]
+    
+    ax = counts.plot(
+        kind='bar',
+        title=f"{user}: Sessions by Month of Year",
+        figsize=(8,4),
+        width=0.8
+    )
+    ax.set_xticklabels(labels, rotation=0)
+    ax.set_xlabel("Month")
+    ax.set_ylabel("Number of Sessions")
+    plt.tight_layout()
+    plt.show()
+    
+
