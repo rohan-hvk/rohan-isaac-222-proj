@@ -42,7 +42,7 @@ This kind of analysis demonstrates the power of data science to reflect real-wor
 
 ```
 📁 Project Root
-├── analysis.ipynb              # Main notebook with full analysis and charts
+├── TechnicalReport.ipynb              # Main notebook with full analysis and charts
 ├── utils.py                    # Helper functions for data loading, cleaning, plotting, and testing
 ├── IsaacNetflixHistory.csv     # Isaac's Netflix viewing history
 ├── RohanNetflixHistory.csv     # Rohan's Netflix viewing history
