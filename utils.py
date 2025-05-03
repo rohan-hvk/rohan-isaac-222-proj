@@ -147,17 +147,20 @@ def run_knn_classification(user_csv_1, user_csv_2, k_range=range(1, 21)):
     print(f"\nBest k = {best_k}, accuracy = {best_acc:.4f}")
 
 def evaluate_classifiers(path1, path2):
+    # load CSVs and label the user
     df1 = pd.read_csv(path1)
     df2 = pd.read_csv(path2)
     df1['user'] = 'Isaac'
     df2['user'] = 'Rohan'
-    df = pd.concat([df1, df2])
+    df = pd.concat([df1, df2])  # combine both datasets
 
+    # basic feature engineering
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
     df['weekday'] = df['Date'].dt.weekday
     df['month'] = df['Date'].dt.month
     df['is_movie'] = (df['Type'].str.lower() == 'movie').astype(int)
 
+    # encode top 10 series names
     top10 = df['Series Name'].value_counts().nlargest(10).index
     df['series_short'] = df['Series Name'].where(df['Series Name'].isin(top10), 'Other')
     enc = OneHotEncoder(drop='first', handle_unknown='ignore')
@@ -165,19 +168,28 @@ def evaluate_classifiers(path1, path2):
     series_cols = enc.get_feature_names_out(['series_short'])
     df = pd.concat([df, pd.DataFrame(ohe, columns=series_cols, index=df.index)], axis=1)
 
+    # define feature set and labels
     X = df[['weekday', 'month', 'is_movie'] + list(series_cols)]
     y = df['user']
-    X_scaled = MinMaxScaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.25, stratify=y, random_state=0)
 
+    # normalize features
+    X_scaled = MinMaxScaler().fit_transform(X)
+
+    # train/test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_scaled, y, test_size=0.25, stratify=y, random_state=0
+    )
+
+    # run kNN for k=1 to 20, keep best accuracy
     knn_acc = 0
     for k in range(1, 21):
         model = KNeighborsClassifier(n_neighbors=k)
         model.fit(X_train, y_train)
         acc = model.score(X_test, y_test)
         if acc > knn_acc:
-            best_k, knn_acc = k, acc
+            best_k, knn_acc = k, acc  # store best k and accuracy
 
+    # train decision tree classifier
     dt_model = DecisionTreeClassifier(random_state=0)
     dt_model.fit(X_train, y_train)
     dt_acc = dt_model.score(X_test, y_test)
